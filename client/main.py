@@ -19,6 +19,7 @@ class SecureChatApp:
         self.setup_login_frame()
 
     def setup_login_frame(self):
+        self.clear_frames()
         self.login_frame.pack()
         logging.debug("Login frame setup completed")
         tk.Label(self.login_frame, text="Email:").grid(row=0, column=0)
@@ -31,6 +32,7 @@ class SecureChatApp:
         tk.Button(self.login_frame, text="Register", command=self.show_register_frame).grid(row=3, column=0, columnspan=2)
 
     def setup_register_frame(self):
+        self.clear_frames()
         self.register_frame.pack()
         logging.debug("Register frame setup completed")
         tk.Label(self.register_frame, text="Email:").grid(row=0, column=0)
@@ -49,36 +51,48 @@ class SecureChatApp:
         tk.Button(self.register_frame, text="Back to Login", command=self.show_login_frame).grid(row=4, column=0, columnspan=2)
 
     def show_login_frame(self):
-        self.register_frame.pack_forget()
         self.setup_login_frame()
 
     def show_register_frame(self):
-        self.login_frame.pack_forget()
         self.setup_register_frame()
 
     def login(self):
         logging.debug("Attempting login")
         email = self.email_entry.get()
         password = self.password_entry.get()
-        response = requests.post(f'{SERVER_URL}/login', json={'email': email, 'password': password})
-        if response.status_code == 200:
+        try:
+            response = requests.post(f'{SERVER_URL}/login', json={'email': email, 'password': password})
+            response.raise_for_status()
             messagebox.showinfo("Success", "Login successful")
             self.setup_chat_frame()
-        else:
+        except requests.exceptions.HTTPError as err:
+            logging.error(f"HTTP error occurred: {err}")
             messagebox.showerror("Error", "Invalid credentials")
+        except requests.exceptions.RequestException as err:
+            logging.error(f"Request error occurred: {err}")
+            messagebox.showerror("Error", "A network error occurred")
 
     def register(self):
         logging.debug("Attempting registration")
         email = self.reg_email_entry.get()
         username = self.username_entry.get()
         password = self.reg_password_entry.get()
-        response = requests.post(f'{SERVER_URL}/register', json={'email': email, 'username': username, 'password': password})
-        if response.status_code == 201:
+        try:
+            response = requests.post(f'{SERVER_URL}/register', json={'email': email, 'username': username, 'password': password})
+            response.raise_for_status()
             messagebox.showinfo("Success", "Registration successful, please verify your email")
-        else:
-            messagebox.showerror("Error", response.json()['message'])
+        except requests.exceptions.HTTPError as err:
+            logging.error(f"HTTP error occurred: {err}")
+            try:
+                messagebox.showerror("Error", response.json()['message'])
+            except ValueError:
+                messagebox.showerror("Error", "A server error occurred")
+        except requests.exceptions.RequestException as err:
+            logging.error(f"Request error occurred: {err}")
+            messagebox.showerror("Error", "A network error occurred")
 
     def setup_chat_frame(self):
+        self.clear_frames()
         self.chat_frame.pack()
         logging.debug("Chat frame setup completed")
         tk.Label(self.chat_frame, text="Recipient:").grid(row=0, column=0)
@@ -92,11 +106,15 @@ class SecureChatApp:
         tk.Button(self.chat_frame, text="Send", command=self.send_message).grid(row=2, column=0, columnspan=2)
         tk.Button(self.chat_frame, text="Receive", command=self.receive_messages).grid(row=3, column=0, columnspan=2)
 
+    # hide all frames before showing a new one
+    def clear_frames(self):
+        self.login_frame.pack_forget()
+        self.register_frame.pack_forget()
+        self.chat_frame.pack_forget()
 
 # Usage
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    import tkinter as tk
     root = tk.Tk()
     app = SecureChatApp(root)
     root.mainloop()

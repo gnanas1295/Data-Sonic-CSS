@@ -1,3 +1,4 @@
+import traceback
 from flask import render_template, redirect, url_for, session, jsonify, request
 from app import app, oauth, db
 from models import User
@@ -54,12 +55,25 @@ def register():
     email = data['email']
     username = data['username']
     password = data['password']
-    verification_code = os.urandom(6).hex()
-    new_user = User(username=username, email=email, password=password, verification_code=verification_code)
-    db.session.add(new_user)
-    db.session.commit()
-    send_verification_email(email, verification_code)
-    return jsonify({'message': 'Registration successful, please verify your email'}), 201
+
+    try:
+        # Check if email already exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return jsonify({'message': 'Email already registered'}), 400
+
+        verification_code = os.urandom(6).hex()
+        new_user = User(username=username, email=email, password=password, verification_code=verification_code)
+        db.session.add(new_user)
+        db.session.commit()
+        send_verification_email(email, verification_code)
+        return jsonify({'message': 'Registration successful, please verify your email'}), 201
+
+    except Exception as e:
+        logger.error(f"An error occurred during registration: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({'message': 'An internal error occurred'}), 500
+
 
 @app.route('/verify_email', methods=['POST'])
 def verify_email():
