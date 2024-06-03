@@ -18,10 +18,6 @@ app.config.from_object(DevelopmentConfig)
 db = SQLAlchemy(app)
 oauth = OAuth(app)
 
-# Log OAuth configuration
-logger.info(f"Google Client ID: {app.config['OAUTH_CREDENTIALS']['google']['id']}")
-logger.info(f"Google Client Secret: {'***' if app.config['OAUTH_CREDENTIALS']['google']['secret'] else None}")
-
 # Register OAuth with Google
 google = oauth.register(
     name='google',
