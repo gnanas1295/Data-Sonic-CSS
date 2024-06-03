@@ -9,15 +9,25 @@ secure_chat_bot/
 │
 ├── server/
 │   ├── app.py
-│   └── requirements.txt
+│   ├── models.py
+│   ├── routes.py
+│   ├── config.py
 │   ├── templates/
 │   │   ├── index.html
+│   │   └── chat.html
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   └── js/
+│   │       └── script.js
+│   └── requirements.txt
 │
 ├── client/
 │   ├── main.py
-|   └── requirements.txt
+│   ├── requirements.py
 │
 └── README.md
+└── .gitignore
 ```
 
 ## Getting Started
@@ -74,7 +84,6 @@ secure_chat_bot/
 - **End-to-End Encryption**: Ensures that messages can only be read by the intended recipient.
 - **OAuth Authentication**: Uses secure OAuth protocol for social media authentication.
 - **Email Verification**: Adds an extra layer of security by verifying users' email addresses.
-- **Session Keys**: Derived using PBKDF2 with a high iteration count to ensure security.
 
 ## Future Improvements
 
