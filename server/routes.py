@@ -1,11 +1,11 @@
-from flask import render_template, redirect, url_for, session
-from app import app, oauth
+from flask import render_template, redirect, url_for, session, jsonify, request
+from app import app, oauth, db
+from models import User
 import logging
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 @app.route('/')
 def index():
@@ -19,7 +19,17 @@ def login():
 @app.route('/auth/callback')
 def auth_callback():
     token = oauth.google.authorize_access_token()
+    logger.info(f'Token received: {token}')
     user_info = oauth.google.parse_id_token(token)
+    logger.info(f'User info received: {user_info}')
+
+    # Check if user already exists, if not create a new user
+    user = User.query.filter_by(email=user_info['email']).first()
+    if not user:
+        user = User(username=user_info['name'], email=user_info['email'], verified=True)
+        db.session.add(user)
+        db.session.commit()
+
     session['user'] = user_info
     return redirect('/chat')
 
