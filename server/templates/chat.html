@@ -3,12 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat - Secure Chat App</title>
+    <title>Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
     <h1>Welcome, {{ user['name'] }}</h1>
     <div id="chat-container">
         <!-- Chat UI components go here -->
     </div>
+    <form id="chat-form">
+        <input type="text" id="message" placeholder="Type your message here...">
+        <button type="submit">Send</button>
+    </form>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </body>
 </html>
