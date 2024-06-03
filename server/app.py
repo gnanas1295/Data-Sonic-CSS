@@ -1,4 +1,5 @@
 from flask import Flask
+from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from authlib.integrations.flask_client import OAuth
 from config import DevelopmentConfig
@@ -38,9 +39,10 @@ google = oauth.register(
 from routes import *
 from models import *
 
-# Ensure database is created
-with app.app_context():
-    db.create_all()
 
 if __name__ == '__main__':
+    load_dotenv()
+    # Ensure database is created
+    with app.app_context():
+        db.create_all()
     app.run(ssl_context='adhoc')
