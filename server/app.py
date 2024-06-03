@@ -35,13 +35,13 @@ google = oauth.register(
     userinfo_kwargs=None,
     client_kwargs={'scope': 'openid profile email'},
 )
-
+# Import routes after app is created to avoid circular imports
 from routes import *
 from models import *
 
+# Ensure database is created
+with app.app_context():
+    db.create_all()
 
 if __name__ == '__main__':
-    # Ensure database is created
-    with app.app_context():
-        db.create_all()
     app.run(ssl_context='adhoc')
