@@ -1,6 +1,10 @@
 from flask import render_template, redirect, url_for, session, jsonify, request
 from app import app, oauth, db
 from models import User
+import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import logging
 
 # Setup logging
@@ -43,3 +47,65 @@ def chat():
     if 'user' not in session:
         return redirect('/')
     return render_template('chat.html', user=session['user'])
+
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.json
+    email = data['email']
+    username = data['username']
+    password = data['password']
+    verification_code = os.urandom(6).hex()
+    new_user = User(username=username, email=email, password=password, verification_code=verification_code)
+    db.session.add(new_user)
+    db.session.commit()
+    send_verification_email(email, verification_code)
+    return jsonify({'message': 'Registration successful, please verify your email'}), 201
+
+@app.route('/verify_email', methods=['POST'])
+def verify_email():
+    data = request.json
+    email = data['email']
+    code = data['code']
+    user = User.query.filter_by(email=email, verification_code=code).first()
+    if user:
+        user.verified = True
+        db.session.commit()
+        return jsonify({'message': 'Email verified successfully'}), 200
+    return jsonify({'message': 'Invalid verification code'}), 400
+
+def send_verification_email(email, code):
+    # Email configuration
+    sender_email = os.environ.get('SENDER_EMAIL')
+    sender_password = os.environ.get('SENDER_PASSWORD')
+
+    # Log email settings for debugging
+    logger.info(f'Sender Email: {sender_email}')
+    logger.info(f'Sender Password: {"***" if sender_password else None}')
+
+    if not sender_email or not sender_password:
+        logger.error('SENDER_EMAIL or SENDER_PASSWORD environment variable is not set')
+        return
+
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = 587  # For SSL use 465
+
+    # Create message
+    message = MIMEMultipart()
+    message['From'] = sender_email
+    message['To'] = email
+    message['Subject'] = 'Verification Code for Resort Chatbot'
+
+    body = f'Your verification code is: {code}. Enter this code to complete registration.'
+    message.attach(MIMEText(body, 'plain'))
+
+    # Connect to SMTP server and send email
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # Secure the connection
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, email, message.as_string())
+        logger.info("Email sent successfully!")
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
+    finally:
+        server.quit()
