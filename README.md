@@ -24,7 +24,7 @@ secure_chat_bot/
 │
 ├── client/
 │   ├── main.py
-│   ├── requirements.py
+│   ├── requirements.txt
 │
 └── README.md
 └── .gitignore
