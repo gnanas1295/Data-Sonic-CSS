@@ -1,9 +1,13 @@
 from flask import Flask
-from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from authlib.integrations.flask_client import OAuth
 from config import DevelopmentConfig
 import logging
+from dotenv import load_dotenv
+
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -41,7 +45,6 @@ from models import *
 
 
 if __name__ == '__main__':
-    load_dotenv()
     # Ensure database is created
     with app.app_context():
         db.create_all()
