@@ -5,7 +5,7 @@ import requests
 import logging
 import base64
 from cryptography.hazmat.primitives import serialization
-from encryption import generate_dh_keys, compute_shared_secret, derive_session_key, encrypt_message, decrypt_message, serialize_public_key
+from encryption import generate_dh_keys, compute_shared_secret, derive_session_key, encrypt_message, decrypt_message, serialize_public_key, deserialize_public_key
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -137,7 +137,6 @@ class SecureChatApp:
                 decrypted_message = decrypt_message(msg['message'], self.session_key)
                 messagebox.showinfo(f"Message from {msg['sender']}", decrypted_message)
 
-
     def perform_dh_key_exchange(self):
         logging.debug("Performing Diffie-Hellman key exchange")
         # Generate Diffie-Hellman keys
@@ -146,13 +145,13 @@ class SecureChatApp:
         serialized_public_key = serialize_public_key(self.public_key)
         # Send serialized public key to server
         response = requests.post(f'{SERVER_URL}/dh_key_exchange', data={'public_key': serialized_public_key})
-        print("Diffie-Hellman key exchange initiated")
+        logging.debug("Diffie-Hellman key exchange initiated")
         if response.status_code == 200:
             # Receive server's public key
             server_public_key = response.json()['public_key'].strip()  # Trim whitespace
             try:
                 # Deserialize server's public key
-                server_public_key = serialization.load_pem_public_key(base64.b64decode(server_public_key))
+                server_public_key = deserialize_public_key(server_public_key)
                 # Compute shared secret
                 shared_secret = compute_shared_secret(self.private_key, server_public_key)
                 # Derive session key
