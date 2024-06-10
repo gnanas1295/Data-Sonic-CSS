@@ -1,7 +1,10 @@
 import traceback
 from flask import render_template, redirect, url_for, session, jsonify, request
 from app import app, oauth, db
-from models import User
+from models import User, Message
+from cryptography.hazmat.primitives.asymmetric import dh
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
 import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -123,3 +126,42 @@ def send_verification_email(email, code):
         logger.error(f"Failed to send email: {e}")
     finally:
         server.quit()
+
+
+@app.route('/dh_key_exchange', methods=['POST'])
+def dh_key_exchange():
+    # Generate DH parameters
+    parameters = dh.generate_parameters(generator=2, key_size=2048, backend=default_backend())
+    private_key = parameters.generate_private_key()
+    public_key = private_key.public_key()
+
+    # Serialize public key and return
+    serialized_public_key = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+
+    # Serialize private key using PKCS8 format
+    serialized_private_key = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    )
+
+    # Store serialized private key for session
+    session['dh_private_key'] = serialized_private_key.decode()
+
+    return jsonify({'public_key': serialized_public_key.decode()}), 200
+
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    data = request.json
+    new_message = Message(sender=data['sender'], recipient=data['recipient'], encrypted_message=data['message'])
+    db.session.add(new_message)
+    db.session.commit()
+    return jsonify({'message': 'Message sent'}), 201
+
+@app.route('/receive_messages/<recipient>', methods=['GET'])
+def receive_messages(recipient):
+    messages = Message.query.filter_by(recipient=recipient).all()
+    return jsonify([{'sender': msg.sender, 'message': msg.encrypted_message} for msg in messages]), 200

@@ -7,3 +7,10 @@ class User(db.Model):
     password = db.Column(db.String(120), nullable=False)
     verification_code = db.Column(db.String(120), nullable=False)
     verified = db.Column(db.Boolean, default=False)
+
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender = db.Column(db.String(80), nullable=False)
+    recipient = db.Column(db.String(80), nullable=False)
+    encrypted_message = db.Column(db.Text, nullable=False)

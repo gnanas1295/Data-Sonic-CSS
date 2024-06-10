@@ -3,6 +3,9 @@ import tkinter as tk
 from tkinter import messagebox
 import requests
 import logging
+import base64
+from cryptography.hazmat.primitives import serialization
+from encryption import generate_dh_keys, compute_shared_secret, derive_session_key, encrypt_message, decrypt_message, serialize_public_key
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -112,9 +115,59 @@ class SecureChatApp:
         self.register_frame.pack_forget()
         self.chat_frame.pack_forget()
 
+    def send_message(self):
+        logging.debug("Attempting to send message")
+        recipient = self.recipient_entry.get()
+        message = self.message_entry.get()
+        # Implement encryption here
+        encrypted_message = encrypt_message(message, self.session_key)
+        response = requests.post(f'{SERVER_URL}/send_message', json={'sender': self.username, 'recipient': recipient, 'message': encrypted_message})
+        if response.status_code == 201:
+            messagebox.showinfo("Success", "Message sent")
+        else:
+            messagebox.showerror("Error", response.json()['message'])
+
+    def receive_messages(self):
+        logging.debug("Attempting to receive messages")
+        response = requests.get(f'{SERVER_URL}/receive_messages/{self.username}')
+        if response.status_code == 200:
+            messages = response.json()
+            for msg in messages:
+                # Implement decryption here
+                decrypted_message = decrypt_message(msg['message'], self.session_key)
+                messagebox.showinfo(f"Message from {msg['sender']}", decrypted_message)
+
+
+    def perform_dh_key_exchange(self):
+        logging.debug("Performing Diffie-Hellman key exchange")
+        # Generate Diffie-Hellman keys
+        self.private_key, self.public_key = generate_dh_keys()
+        # Serialize the public key
+        serialized_public_key = serialize_public_key(self.public_key)
+        # Send serialized public key to server
+        response = requests.post(f'{SERVER_URL}/dh_key_exchange', data={'public_key': serialized_public_key})
+        print("Diffie-Hellman key exchange initiated")
+        if response.status_code == 200:
+            # Receive server's public key
+            server_public_key = response.json()['public_key'].strip()  # Trim whitespace
+            try:
+                # Deserialize server's public key
+                server_public_key = serialization.load_pem_public_key(base64.b64decode(server_public_key))
+                # Compute shared secret
+                shared_secret = compute_shared_secret(self.private_key, server_public_key)
+                # Derive session key
+                self.session_key = derive_session_key(shared_secret)
+                logging.debug("Session key derived successfully")
+            except Exception as e:
+                logging.error(f"Error in Diffie-Hellman key exchange: {e}")
+        else:
+            logging.error("Error in Diffie-Hellman key exchange")
+
 # Usage
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     root = tk.Tk()
     app = SecureChatApp(root)
+    # Perform Diffie-Hellman key exchange before starting the Tkinter main loop
+    app.perform_dh_key_exchange()
     root.mainloop()
