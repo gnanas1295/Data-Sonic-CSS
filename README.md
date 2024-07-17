@@ -27,7 +27,10 @@ secure_messaging/
 2. Open terminal:
 
    ```sh
-   python3 app.py
+   python -m venv venv
+   source venv/bin/activate
+   pip install Flask Flask-SQLAlchemy Flask-Mail cryptography
+   python app.py
    ```
 
 ## Features
