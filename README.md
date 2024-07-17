@@ -6,8 +6,11 @@ This project is a secure chat application that uses end-to-end encryption to ens
 
 ```
 secure_messaging/
+│── static/
+│   |── scripts.js
+|   |── styles.css
 │
-├── static/
+├── templates/
 │   |── index.html
 |__ app.py
 │
@@ -61,8 +64,6 @@ If you already have a virtual environment, remove it and create a new one to ens
     rm -rf venv
     python -m venv venv
     source venv/bin/activate  # On Windows use venv\Scripts\activate
-    pip install --upgrade pip
-    pip install -r requirements.txt
    ```
 
 This setup provides a secure, end-to-end encrypted chatbot for a resort website with user-friendly authentication and a web-based interface.
