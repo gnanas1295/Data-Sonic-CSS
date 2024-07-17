@@ -35,7 +35,7 @@ secure_messaging/
    pip install Flask Flask-SQLAlchemy Flask-Mail cryptography
    python app.py
    ```
-2.A. Open Command Prompt: (For Windows)
+3. Open Command Prompt: (For Windows)
 
    ```sh
    python -m venv venv
@@ -44,6 +44,21 @@ secure_messaging/
    pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
    python app.py
    ```
+   
+4. Note:
+
+    We use Google Auth for the authentication of the users. So, the API keys of your Google OAuth should be added in the created python virtual environment, before running the app.py file. If not, error will arise.
+    ```
+    For Mac:
+    export SECRET_KEY="your_secret_key_here"
+    export GOOGLE_CLIENT_ID="your_google_client_id_here"
+    export GOOGLE_CLIENT_SECRET="your_google_client_secret_here"
+
+    For Windows:
+    set SECRET_KEY=your_secret_key_here
+    set GOOGLE_CLIENT_ID=your_google_client_id_here
+    set GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+    ```
 
    
 ## Features
