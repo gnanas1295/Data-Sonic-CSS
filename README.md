@@ -21,13 +21,13 @@ secure_messaging/
 
 ## Getting Started
 
-1. Navigate to the `secure_messaging` directory:
+1. Navigate to the `secure-messaging-gmail` directory:
 
    ```sh
    cd secure_messaging
    ```
 
-2. Open terminal:
+2. Open terminal: (For Mac)
 
    ```sh
    python -m venv venv
@@ -35,7 +35,15 @@ secure_messaging/
    pip install Flask Flask-SQLAlchemy Flask-Mail cryptography
    python app.py
    ```
+2.A. Open Command Prompt: (For Windows)
 
+   python -m venv venv
+   venv\Scripts\activate
+   pip install Flask Flask-SQLAlchemy Flask-Mail cryptography requests
+   pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+   python app.py
+
+   
 ## Features
 
 - **User Authentication**: Users can authenticate via social media (Google) or email.
