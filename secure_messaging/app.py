@@ -6,6 +6,9 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding
+
 import base64
 import os
 import logging
@@ -63,8 +66,11 @@ def exchange_keys():
 
     if user and recipient:
         try:
+            logging.debug(f"User {email} and Recipient {recipient_email} found in database")
+
             recipient_public_key_pem = recipient.public_key.encode('utf-8')
             recipient_public_key = serialization.load_pem_public_key(recipient_public_key_pem, backend=default_backend())
+            logging.debug(f"Recipient public key loaded: {recipient_public_key}")
 
             private_key = parameters.generate_private_key()
             logging.debug(f"Generated private key for {email}")
@@ -86,7 +92,9 @@ def exchange_keys():
             logging.error(f"Error during key exchange: {e}")
             return jsonify({'message': 'Key exchange failed!'}), 500
     else:
+        logging.error(f"User {email} or recipient {recipient_email} not found in database")
         return jsonify({'message': 'User not found!'}), 404
+
 
 @app.route('/send', methods=['POST'])
 def send_message():
@@ -99,17 +107,58 @@ def send_message():
     recipient = User.query.filter_by(email=recipient_email).first()
 
     if user and recipient:
-        # Encrypt the message (simulated here, you should use proper encryption)
-        encrypted_message = f"Encrypted message from {email}: {message}"
+        try:
+            # Perform key exchange to get the shared key
+            logging.debug(f"Starting key exchange for user {email} and recipient {recipient_email}")
 
-        # Send the encrypted message via email
-        msg = Message('New Encrypted Message', sender=app.config['MAIL_USERNAME'], recipients=[recipient_email])
-        msg.body = encrypted_message
-        mail.send(msg)
+            recipient_public_key_pem = recipient.public_key.encode('utf-8')
+            recipient_public_key = serialization.load_pem_public_key(recipient_public_key_pem, backend=default_backend())
+            logging.debug(f"Recipient public key loaded: {recipient_public_key}")
 
-        return jsonify({'message': 'Message sent!'}), 200
+            private_key = parameters.generate_private_key()
+            shared_key = private_key.exchange(recipient_public_key)
+            logging.debug(f"Shared key computed successfully between {email} and {recipient_email}")
+
+            # Derive AES key from shared key
+            derived_key = HKDF(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=None,
+                info=b'handshake data',
+                backend=default_backend()
+            ).derive(shared_key)
+            logging.debug(f"AES key derived successfully")
+
+            # Encrypt the message using AES
+            iv = os.urandom(16)
+            cipher = Cipher(algorithms.AES(derived_key), modes.CBC(iv), backend=default_backend())
+            encryptor = cipher.encryptor()
+
+            # Pad the message to be AES block size compatible
+            padder = padding.PKCS7(128).padder()
+            padded_message = padder.update(message.encode()) + padder.finalize()
+
+            encrypted_message = encryptor.update(padded_message) + encryptor.finalize()
+            logging.debug(f"Message encrypted successfully")
+
+            # Encode the IV and the encrypted message in a way that can be sent via email
+            iv_b64 = base64.urlsafe_b64encode(iv).decode('utf-8')
+            encrypted_message_b64 = base64.urlsafe_b64encode(encrypted_message).decode('utf-8')
+
+            # Send the encrypted message via email
+            msg = Message('New Encrypted Message', sender=app.config['MAIL_USERNAME'], recipients=[recipient_email])
+            msg.body = f"IV: {iv_b64}\nEncrypted message: {encrypted_message_b64}"
+            mail.send(msg)
+            logging.debug(f"Encrypted message sent to {recipient_email}")
+
+            return jsonify({'message': 'Message sent!'}), 200
+        except Exception as e:
+            logging.error(f"Error during message sending: {e}")
+            return jsonify({'message': 'Message sending failed!'}), 500
     else:
+        logging.error(f"User {email} or recipient {recipient_email} not found in database")
         return jsonify({'message': 'User not found!'}), 404
+
 
 if __name__ == '__main__':
     with app.app_context():
