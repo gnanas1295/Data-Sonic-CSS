@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Secure Messaging App</title>
+</head>
+<body>
+    <h1>Secure Messaging App</h1>
+
+    <h2>Register</h2>
+    <form id="register-form">
+        <input type="email" id="register-email" placeholder="Your email" required>
+        <button type="submit">Register</button>
+    </form>
+
+    <h2>Exchange Keys</h2>
+    <form id="exchange-form">
+        <input type="email" id="exchange-email" placeholder="Your email" required>
+        <input type="email" id="exchange-recipient-email" placeholder="Recipient's email" required>
+        <button type="submit">Exchange Keys</button>
+    </form>
+
+    <h2>Send Message</h2>
+    <form id="send-form">
+        <input type="email" id="send-email" placeholder="Your email" required>
+        <input type="email" id="send-recipient-email" placeholder="Recipient's email" required>
+        <textarea id="send-message" placeholder="Your message" required></textarea>
+        <button type="submit">Send Message</button>
+    </form>
+
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('register-email').value;
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+            const data = await response.json();
+            alert(data.message);
+        });
+
+        document.getElementById('exchange-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('exchange-email').value;
+            const recipientEmail = document.getElementById('exchange-recipient-email').value;
+            const response = await fetch('/exchange', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, recipient_email: recipientEmail })
+            });
+            const data = await response.json();
+            if (response.status === 200) {
+                alert('Derived Key: ' + data.key);
+            } else {
+                alert(data.message);
+            }
+        });
+
+        document.getElementById('send-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('send-email').value;
+            const recipientEmail = document.getElementById('send-recipient-email').value;
+            const message = document.getElementById('send-message').value;
+            const response = await fetch('/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, recipient_email: recipientEmail, message: message })
+            });
+            const data = await response.json();
+            alert(data.message);
+        });
+    </script>
+</body>
+</html>
