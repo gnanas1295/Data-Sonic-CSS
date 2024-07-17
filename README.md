@@ -37,11 +37,13 @@ secure_messaging/
    ```
 2.A. Open Command Prompt: (For Windows)
 
+   ```sh
    python -m venv venv
    venv\Scripts\activate
    pip install Flask Flask-SQLAlchemy Flask-Mail cryptography requests
    pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
    python app.py
+   ```
 
    
 ## Features
