@@ -1,10 +1,8 @@
-// components/Chat.js
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { decryptWithSymmetricKey, encryptWithSymmetricKey, generateSymmetricKey } from '../utils/cryptoUtils';
 
-const Chat = ({ recipientEmail, onReceiveMessage }) => {
+const Chat = ({ recipientEmail, onReceiveMessage, user }) => {
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
     const [symmetricKey, setSymmetricKey] = useState('');
@@ -19,8 +17,12 @@ const Chat = ({ recipientEmail, onReceiveMessage }) => {
 
     const handleSendMessage = async () => {
         const encryptedMessage = encryptWithSymmetricKey(message, symmetricKey);
-        await axios.post('http://127.0.0.1:5000/send-message', { recipient: recipientEmail, message: encryptedMessage });
-        setMessages([...messages, { message: encryptedMessage, sender: 'Me' }]);
+        await axios.post('http://127.0.0.1:5000/send-message', {
+            recipient: recipientEmail,
+            message: encryptedMessage,
+            sender: user
+        });
+        setMessages([...messages, { message: encryptedMessage, sender: user }]);
         setMessage('');
     };
 

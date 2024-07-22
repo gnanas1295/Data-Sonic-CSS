@@ -1,5 +1,3 @@
-// utils/cryptoUtils.js
-
 import forge from 'node-forge';
 import CryptoJS from 'crypto-js';
 
@@ -15,7 +13,12 @@ export const generateKeyPair = () => {
 // Function to encrypt data using RSA public key
 export const encryptWithPublicKey = (data, publicKeyPem) => {
     const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
-    const encrypted = publicKey.encrypt(data, 'RSA-OAEP');
+    const encrypted = publicKey.encrypt(data, 'RSA-OAEP', {
+        md: forge.md.sha256.create(),
+        mgf1: {
+            md: forge.md.sha1.create()
+        }
+    });
     return forge.util.encode64(encrypted);
 };
 
@@ -23,7 +26,12 @@ export const encryptWithPublicKey = (data, publicKeyPem) => {
 export const decryptWithPrivateKey = (encryptedData, privateKeyPem) => {
     const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
     const decoded = forge.util.decode64(encryptedData);
-    const decrypted = privateKey.decrypt(decoded, 'RSA-OAEP');
+    const decrypted = privateKey.decrypt(decoded, 'RSA-OAEP', {
+        md: forge.md.sha256.create(),
+        mgf1: {
+            md: forge.md.sha1.create()
+        }
+    });
     return decrypted;
 };
 
@@ -44,10 +52,15 @@ export const encryptWithSymmetricKey = (data, key) => {
 
 // Function to decrypt data using a symmetric key
 export const decryptWithSymmetricKey = (encryptedData, key) => {
-    const iv = CryptoJS.enc.Hex.parse(encryptedData.slice(0, 32));
-    const encrypted = encryptedData.slice(32);
-    const decrypted = CryptoJS.AES.decrypt(encrypted, CryptoJS.enc.Hex.parse(key), {
-        iv: iv
-    });
-    return decrypted.toString(CryptoJS.enc.Utf8);
+    try {
+        const iv = CryptoJS.enc.Hex.parse(encryptedData.slice(0, 32)); // Extract the IV from the beginning of the encrypted data
+        const encrypted = encryptedData.slice(32); // Extract the actual encrypted data
+        const decrypted = CryptoJS.AES.decrypt(encrypted, CryptoJS.enc.Hex.parse(key), {
+            iv: iv
+        });
+        return decrypted.toString(CryptoJS.enc.Utf8);
+    } catch (error) {
+        console.error('Error decrypting message:', error);
+        throw error;
+    }
 };

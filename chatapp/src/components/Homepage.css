@@ -1,23 +1,66 @@
-.homepage {
+body{
+    font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
-    background-color: #f0f0f0;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.chat-window {
+    width: 80%;
+    max-width: 600px;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 button {
-    background-color: #4285f4;
-    color: white;
+    background-color: gold;
+    color: black;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
-    margin-top: 10px;
+    transition: background-color 0.3s;
 }
 
 button:hover {
-    background-color: #357ae8;
+    background-color: goldenrod;
+}
+
+input[type="text"], input[type="email"] {
+    width: 96%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+h2 {
+    border-bottom: 2px solid gold;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    color: gold;
+}
+
+p {
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    button {
+        width: 100%;
+        font-size: 14px;
+    }
+
+    input[type="text"], input[type="email"] {
+        font-size: 14px;
+    }
 }
