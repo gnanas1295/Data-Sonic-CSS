@@ -1,25 +1,37 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { decryptWithSymmetricKey, encryptWithSymmetricKey } from '../utils/cryptoUtils';
+// components/Chat.js
 
-const Chat = ({ privateKey, symmetricKey }) => {
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { decryptWithSymmetricKey, encryptWithSymmetricKey, generateSymmetricKey } from '../utils/cryptoUtils';
+
+const Chat = ({ recipientEmail, onReceiveMessage }) => {
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
+    const [symmetricKey, setSymmetricKey] = useState('');
+
+    useEffect(() => {
+        if (recipientEmail) {
+            // Generate a symmetric key for the session
+            const key = generateSymmetricKey();
+            setSymmetricKey(key);
+        }
+    }, [recipientEmail]);
 
     const handleSendMessage = async () => {
         const encryptedMessage = encryptWithSymmetricKey(message, symmetricKey);
-        await axios.post('http://localhost:5000/send-message', { message: encryptedMessage });
+        await axios.post('http://127.0.0.1:5000/send-message', { recipient: recipientEmail, message: encryptedMessage });
         setMessages([...messages, { message: encryptedMessage, sender: 'Me' }]);
         setMessage('');
     };
 
     const fetchMessages = async () => {
-        const response = await axios.get('http://localhost:5000/get-messages');
+        const response = await axios.get('http://127.0.0.1:5000/get-messages', { params: { recipient: recipientEmail } });
         const decryptedMessages = response.data.messages.map(msg => ({
             ...msg,
             message: decryptWithSymmetricKey(msg.message, symmetricKey),
         }));
         setMessages(decryptedMessages);
+        onReceiveMessage(decryptedMessages);
     };
 
     return (

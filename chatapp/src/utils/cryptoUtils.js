@@ -1,4 +1,7 @@
+// utils/cryptoUtils.js
+
 import forge from 'node-forge';
+import CryptoJS from 'crypto-js';
 
 // Function to generate RSA key pair
 export const generateKeyPair = () => {
@@ -24,25 +27,27 @@ export const decryptWithPrivateKey = (encryptedData, privateKeyPem) => {
     return decrypted;
 };
 
+// Function to generate a symmetric key (AES)
+export const generateSymmetricKey = () => {
+    const key = CryptoJS.lib.WordArray.random(16); // 128-bit key
+    return key.toString(CryptoJS.enc.Hex);
+};
+
 // Function to encrypt data using a symmetric key (AES)
 export const encryptWithSymmetricKey = (data, key) => {
-    const iv = forge.random.getBytesSync(16);
-    const cipher = forge.cipher.createCipher('AES-CBC', key);
-    cipher.start({ iv: iv });
-    cipher.update(forge.util.createBuffer(data));
-    cipher.finish();
-    const encrypted = cipher.output;
-    return forge.util.encode64(iv + encrypted.toHex());
+    const iv = CryptoJS.lib.WordArray.random(16);
+    const encrypted = CryptoJS.AES.encrypt(data, CryptoJS.enc.Hex.parse(key), {
+        iv: iv
+    });
+    return iv.toString() + encrypted.toString();
 };
 
 // Function to decrypt data using a symmetric key
 export const decryptWithSymmetricKey = (encryptedData, key) => {
-    const data = forge.util.decode64(encryptedData);
-    const iv = data.slice(0, 16);
-    const encrypted = data.slice(16);
-    const decipher = forge.cipher.createDecipher('AES-CBC', key);
-    decipher.start({ iv: iv });
-    decipher.update(forge.util.createBuffer(encrypted, 'hex'));
-    decipher.finish();
-    return decipher.output.toString();
+    const iv = CryptoJS.enc.Hex.parse(encryptedData.slice(0, 32));
+    const encrypted = encryptedData.slice(32);
+    const decrypted = CryptoJS.AES.decrypt(encrypted, CryptoJS.enc.Hex.parse(key), {
+        iv: iv
+    });
+    return decrypted.toString(CryptoJS.enc.Utf8);
 };

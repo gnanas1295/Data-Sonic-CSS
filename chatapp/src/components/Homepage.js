@@ -1,7 +1,7 @@
 // components/Homepage.js
 
 import React, { useState, useEffect } from 'react';
-import { googleSignIn, googleSignOut, sendEmail } from '../utils/googleAuth';
+import { googleSignIn, googleSignOut } from '../utils/googleAuth';
 import { generateKeyPair, encryptWithPublicKey, decryptWithPrivateKey } from '../utils/cryptoUtils';
 import Chat from './Chat';
 import './Homepage.css';
@@ -13,30 +13,24 @@ const Homepage = () => {
     const [privateKey, setPrivateKey] = useState('');
     const [messageStatus, setMessageStatus] = useState('');
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState('');
     const [recipientEmail, setRecipientEmail] = useState('');
     const [encryptedMessage, setEncryptedMessage] = useState('');
 
     useEffect(() => {
         const auth = getAuth();
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, (user) => {
             if (user) {
                 setUser(user);
-                const token = await user.getIdToken(true);
-                setToken(token);
-                console.log('Token:', token);
             } else {
                 setUser(null);
-                setToken('');
             }
         });
     }, []);
 
     const handleLogin = async () => {
         try {
-            const { user, token } = await googleSignIn();
+            const { user } = await googleSignIn();
             setUser(user);
-            setToken(token);
         } catch (error) {
             console.error('Error logging in:', error);
         }
@@ -46,7 +40,6 @@ const Homepage = () => {
         try {
             await googleSignOut();
             setUser(null);
-            setToken('');
             setEmail('');
             setPublicKey('');
             setPrivateKey('');
@@ -58,8 +51,8 @@ const Homepage = () => {
         }
     };
 
-    const handleSendEmail = async () => {
-        if (!user || !token) {
+    const handleSendEmail = () => {
+        if (!user) {
             setMessageStatus('Please log in first.');
             return;
         }
@@ -68,19 +61,16 @@ const Homepage = () => {
         setPublicKey(senderPublicKey);
         setPrivateKey(senderPrivateKey);
 
-        const secretKey = 'your-secret-key';
+        const secretKey = "b'fY\x1aL\x0f\xe8V6\xb4\xbb\xc0\xb7\xd9\xe5\xa0\x1d]\x8b\x84\x8f\x14\xf3\xea\xd1'"; // Replace with your actual secret key
         const encryptedSecretKey = encryptWithPublicKey(secretKey, senderPublicKey);
 
         const subject = 'Your Encrypted Key';
-        const body = `Here is the encrypted secret key:\n\n${encryptedSecretKey}\n\nVisit the following link to access the chat:\n[Your React App Link]`;
+        const body = `Here is the encrypted secret key:\n\n${encryptedSecretKey}\n\nVisit the following link to access the chat:\nhttp://localhost:3000/`;
 
-        try {
-            await sendEmail(email, subject, body, token);
-            setMessageStatus('Email sent successfully.');
-        } catch (error) {
-            console.error('Error sending email:', error);
-            setMessageStatus('Error sending email.');
-        }
+        const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailtoLink;
+
+        setMessageStatus('Email client opened.');
     };
 
     const handleReceiveMessage = (encryptedMessage) => {

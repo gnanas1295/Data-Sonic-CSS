@@ -37,7 +37,7 @@ const SendEmail = () => {
 
         // Compose the email
         const subject = 'Your Encrypted Key';
-        const body = `Here is the encrypted secret key:\n\n${encryptedSecretKey}\n\nVisit the following link to access the chat:\n[Your React App Link]`;
+        const body = `Here is the encrypted secret key:\n\n${encryptedSecretKey}\n\nVisit the following link to access the chat:\nhttp://localhost:3000/`;
 
         // Send email
         try {
