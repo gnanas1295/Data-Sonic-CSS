@@ -40,7 +40,7 @@ secure_messaging/
    ```sh
    python -m venv venv
    venv\Scripts\activate
-   pip install Flask Flask-SQLAlchemy Flask-Mail cryptography requests
+   pip install Flask Flask-SQLAlchemy Flask-Mail cryptography requests nvm
    pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
    python app.py
    ```
