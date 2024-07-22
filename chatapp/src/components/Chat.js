@@ -17,7 +17,8 @@ const Chat = ({ recipientEmail, onReceiveMessage, user }) => {
 
     const handleSendMessage = async () => {
         const encryptedMessage = encryptWithSymmetricKey(message, symmetricKey);
-        await axios.post('https://data-sonic-css-1f7k.onrender.com/send-message', {
+        // await axios.post('https://data-sonic-css-1f7k.onrender.com/send-message', {
+        await axios.post('http://127.0.0.1:5000/send-message', {
             recipient: recipientEmail,
             message: encryptedMessage,
             sender: user
@@ -27,7 +28,8 @@ const Chat = ({ recipientEmail, onReceiveMessage, user }) => {
     };
 
     const fetchMessages = async () => {
-        const response = await axios.get('https://data-sonic-css-1f7k.onrender.com/get-messages', { params: { recipient: recipientEmail } });
+        // const response = await axios.get('https://data-sonic-css-1f7k.onrender.com/get-messages', { params: { recipient: recipientEmail } });
+        const response = await axios.get('http://127.0.0.1:5000/get-messages', { params: { recipient: recipientEmail } });
         const decryptedMessages = response.data.messages.map(msg => ({
             ...msg,
             message: decryptWithSymmetricKey(msg.message, symmetricKey),
