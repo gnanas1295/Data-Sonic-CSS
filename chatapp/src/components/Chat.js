@@ -2,34 +2,33 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { decryptWithSymmetricKey, encryptWithSymmetricKey, generateSymmetricKey } from '../utils/cryptoUtils';
 
-const Chat = ({ recipientEmail, onReceiveMessage, user }) => {
+const Chat = ({ recipientEmail, senderEmail, onReceiveMessage }) => {
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
     const [symmetricKey, setSymmetricKey] = useState('');
 
     useEffect(() => {
-        if (recipientEmail) {
+        if (recipientEmail || senderEmail) {
+            fetchMessages();
             // Generate a symmetric key for the session
             const key = generateSymmetricKey();
             setSymmetricKey(key);
         }
-    }, [recipientEmail]);
+    }, [recipientEmail, senderEmail]);
 
     const handleSendMessage = async () => {
         const encryptedMessage = encryptWithSymmetricKey(message, symmetricKey);
-        // await axios.post('https://data-sonic-css-1f7k.onrender.com/send-message', {
         await axios.post('http://127.0.0.1:5000/send-message', {
             recipient: recipientEmail,
             message: encryptedMessage,
-            sender: user
+            sender: senderEmail
         });
-        setMessages([...messages, { message: encryptedMessage, sender: user }]);
+        setMessages([...messages, { message: encryptedMessage, sender: senderEmail, recipient: recipientEmail, timestamp: new Date().toISOString() }]);
         setMessage('');
     };
 
     const fetchMessages = async () => {
-        // const response = await axios.get('https://data-sonic-css-1f7k.onrender.com/get-messages', { params: { recipient: recipientEmail } });
-        const response = await axios.get('http://127.0.0.1:5000/get-messages', { params: { recipient: recipientEmail } });
+        const response = await axios.get('http://127.0.0.1:5000/get-messages', { params: { user: senderEmail } });
         const decryptedMessages = response.data.messages.map(msg => ({
             ...msg,
             message: decryptWithSymmetricKey(msg.message, symmetricKey),
@@ -42,7 +41,9 @@ const Chat = ({ recipientEmail, onReceiveMessage, user }) => {
         <div>
             <div>
                 {messages.map((msg, index) => (
-                    <div key={index}>{msg.sender}: {msg.message}</div>
+                    <div key={index}>
+                        <b>{msg.sender}:</b> {msg.message} <i>({new Date(msg.timestamp).toLocaleString()})</i>
+                    </div>
                 ))}
             </div>
             <input

@@ -1,11 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
 
-#Configuring the DB
+# Configuring the DB
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///messages.db'
 db = SQLAlchemy(app)
 
@@ -15,13 +16,11 @@ class Message(db.Model):
     recipient = db.Column(db.String(120), nullable=False)
     sender = db.Column(db.String(120), nullable=False)
     encrypted_message = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 # Create the database
 with app.app_context():
     db.create_all()
-
-# Store messages as a list of dictionaries
-# messages = []
 
 @app.route('/send-message', methods=['POST'])
 def send_message():
@@ -30,31 +29,22 @@ def send_message():
     message = data['message']
     sender = data.get('sender', 'Anonymous')  # Default sender if not provided
     new_message = Message(recipient=recipient, sender=sender, encrypted_message=message)
-    # messages.append({'recipient': recipient, 'message': message, 'sender': sender})
-    print("Messages: ", new_message)
     db.session.add(new_message)
     db.session.commit()
     return jsonify({'status': 'Message sent'}), 200
 
 @app.route('/get-messages', methods=['GET'])
 def get_messages():
-    # recipient = request.args.get('recipient')
-    # if not recipient:
-    #     return jsonify({'error': 'Recipient email is required'}), 400
+    user_email = request.args.get('user')
+    if not user_email:
+        return jsonify({'error': 'User email is required'}), 400
 
-    # # recipient_messages = [msg for msg in messages if msg['recipient'] == recipient]
-    # # return jsonify({'messages': recipient_messages}), 200
-    # recipient_messages = Message.query.filter_by(recipient=recipient).all()
-    # messages_list = [{'sender': msg.sender, 'message': msg.encrypted_message} for msg in recipient_messages]
-    # return jsonify({'messages': messages_list}), 200
-    sender = request.args.get('recipient')
-    if not sender:
-        return jsonify({'error': 'Sender email is required'}), 400
+    # Fetch messages where the user is either the sender or the recipient
+    user_messages = Message.query.filter(
+        (Message.sender == user_email) | (Message.recipient == user_email)
+    ).order_by(Message.timestamp).all()
 
-    # recipient_messages = [msg for msg in messages if msg['recipient'] == recipient]
-    # return jsonify({'messages': recipient_messages}), 200
-    sender_messages = Message.query.filter_by(sender=sender).all()
-    messages_list = [{'sender': msg.sender, 'message': msg.encrypted_message} for msg in sender_messages]
+    messages_list = [{'sender': msg.sender, 'recipient': msg.recipient, 'message': msg.encrypted_message, 'timestamp': msg.timestamp} for msg in user_messages]
     return jsonify({'messages': messages_list}), 200
 
 if __name__ == '__main__':
