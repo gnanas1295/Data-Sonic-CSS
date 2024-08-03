@@ -1,57 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { decryptWithSymmetricKey, encryptWithSymmetricKey, generateSymmetricKey } from '../utils/cryptoUtils';
+import React, { useState } from 'react';
+import './ChatPage.css';
+import { encryptWithSymmetricKey } from '../utils/cryptoUtils';
 
-const Chat = ({ recipientEmail, onReceiveMessage, user }) => {
+const Chat = ({ recipientEmail, onReceiveMessage, symmetricKey, user }) => {
     const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState([]);
-    const [symmetricKey, setSymmetricKey] = useState('');
+    const [messageStatus, setMessageStatus] = useState('');
 
-    useEffect(() => {
-        if (recipientEmail) {
-            // Generate a symmetric key for the session
-            const key = generateSymmetricKey();
-            setSymmetricKey(key);
+    const handleSendMessage = () => {
+        if (!symmetricKey) {
+            setMessageStatus('No symmetric key available for encryption.');
+            return;
         }
-    }, [recipientEmail]);
-
-    const handleSendMessage = async () => {
-        const encryptedMessage = encryptWithSymmetricKey(message, symmetricKey);
-        // await axios.post('https://data-sonic-css-1f7k.onrender.com/send-message', {
-        await axios.post('http://127.0.0.1:5000/send-message', {
-            recipient: recipientEmail,
-            message: encryptedMessage,
-            sender: user
-        });
-        setMessages([...messages, { message: encryptedMessage, sender: user }]);
-        setMessage('');
-    };
-
-    const fetchMessages = async () => {
-        // const response = await axios.get('https://data-sonic-css-1f7k.onrender.com/get-messages', { params: { recipient: recipientEmail } });
-        const response = await axios.get('http://127.0.0.1:5000/get-messages', { params: { recipient: recipientEmail } });
-        const decryptedMessages = response.data.messages.map(msg => ({
-            ...msg,
-            message: decryptWithSymmetricKey(msg.message, symmetricKey),
-        }));
-        setMessages(decryptedMessages);
-        onReceiveMessage(decryptedMessages);
+        try {
+            const encryptedMessage = encryptWithSymmetricKey(message, symmetricKey);
+            onReceiveMessage(encryptedMessage);
+            setMessage('');
+            setMessageStatus('Message sent successfully.');
+        } catch (error) {
+            console.error('Error encrypting message:', error);
+            setMessageStatus('Error encrypting message.');
+        }
     };
 
     return (
-        <div>
-            <div>
-                {messages.map((msg, index) => (
-                    <div key={index}>{msg.sender}: {msg.message}</div>
-                ))}
-            </div>
+        <div className="chat-page">
+            <h2>Chat with {recipientEmail}</h2>
             <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
+                placeholder="Enter your message"
             />
-            <button onClick={handleSendMessage}>Send</button>
-            <button onClick={fetchMessages}>Fetch Messages</button>
+            <button onClick={handleSendMessage}>Send Message</button>
+            {messageStatus && <p>{messageStatus}</p>}
         </div>
     );
 };

@@ -1,0 +1,19 @@
+/* ChatPage.css */
+
+.chat-page {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.chat-page h2 {
+    margin-top: 20px;
+}
+
+.chat-page input {
+    display: block;
+    margin: 10px 0;
+}
+
+.chat-page button {
+    margin: 10px 0;
+}
