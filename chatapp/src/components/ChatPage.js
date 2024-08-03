@@ -80,7 +80,7 @@ const ChatPage = () => {
         const body = `Here is the encrypted symmetric key:\n\n${encryptedSecretKey}\n\nVisit the following link to access the chat:\nhttp://localhost:3000/chat`;
 
         try {
-            await sendEmail(email, subject, body);
+            await sendEmail(recipientEmail, subject, body);
             setMessageStatus('Encrypted symmetric key sent via email.');
         } catch (error) {
             setMessageStatus('Failed to send encrypted symmetric key.');
@@ -145,12 +145,6 @@ const ChatPage = () => {
                     </div>
                     <div>
                         <h2>Send Encrypted Symmetric Key</h2>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Recipient Email"
-                        />
                         <input
                             type="text"
                             value={recipientPublicKey}
