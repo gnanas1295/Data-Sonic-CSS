@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Chat from './Chat';
 import './ChatPage.css';
+import axios from 'axios';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { generateKeyPair, encryptWithPublicKey, decryptWithPrivateKey, generateSymmetricKey, decryptWithSymmetricKey } from '../utils/cryptoUtils';
 import { sendEmail } from '../utils/SendEmail';
@@ -17,6 +18,7 @@ const ChatPage = () => {
     const [encryptedMessage, setEncryptedMessage] = useState('');
     const [encryptedSymmetricKey, setEncryptedSymmetricKey] = useState('');
     const [symmetricKey, setSymmetricKey] = useState('');
+    const [messages, setMessages] = useState([]);
 
     useEffect(() => {
         const auth = getAuth();
@@ -31,6 +33,33 @@ const ChatPage = () => {
             }
         });
     }, []);
+
+    useEffect(() => {
+        if (user) {
+            fetchMessages();
+        }
+    }, [user]);
+
+    const fetchMessages = async () => {
+        try {
+            const response = await axios.get('http://127.0.0.1:5000/get-messages', {
+                params: {
+                    recipient: recipientEmail,
+                    sender: user.email
+                }
+            });
+
+            const decryptedMessages = response.data.messages.map(msg => ({
+                sender: msg.sender,
+                message: decryptWithSymmetricKey(msg.message, symmetricKey)
+            }));
+
+            setMessages(decryptedMessages);
+        } catch (error) {
+            console.error('Error fetching messages:', error);
+        }
+    };
+
 
     const handleLogin = async () => {
         try {
@@ -109,12 +138,14 @@ const ChatPage = () => {
         }
         try {
             const decryptedMessage = decryptWithSymmetricKey(encryptedMessage, symmetricKey);
+            setMessages(prevMessages => [...prevMessages, { sender: 'Unknown', message: decryptedMessage }]);
             setEncryptedMessage(decryptedMessage);
         } catch (error) {
             console.error('Error decrypting message:', error);
             setMessageStatus('Error decrypting message.');
         }
     };
+
 
     const handlePublicKeyChange = (e) => {
         setRecipientPublicKey(e.target.value);
@@ -170,8 +201,17 @@ const ChatPage = () => {
                             onReceiveMessage={handleReceiveMessage}
                             symmetricKey={symmetricKey}
                             user={user.email}
+                            fetchMessages={fetchMessages}
                         />
                         {encryptedMessage && <p>Decrypted Message: {encryptedMessage}</p>}
+                        <div>
+                            <h2>Chat History</h2>
+                            {messages.map((msg, index) => (
+                                <div key={index}>
+                                    <p><strong>{msg.sender}:</strong> {msg.message}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}
