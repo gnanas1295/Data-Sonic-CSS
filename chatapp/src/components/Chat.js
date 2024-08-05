@@ -2,17 +2,18 @@ import React, { useState } from 'react';
 import './ChatPage.css';
 import { encryptWithSymmetricKey } from '../utils/cryptoUtils';
 
-const Chat = ({ recipientEmail, onReceiveMessage, symmetricKey, user }) => {
+const Chat = ({ recipientEmail, onReceiveMessage, symmetricKey }) => {
     const [message, setMessage] = useState('');
     const [messageStatus, setMessageStatus] = useState('');
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (!symmetricKey) {
             setMessageStatus('No symmetric key available for encryption.');
             return;
         }
         try {
             const encryptedMessage = encryptWithSymmetricKey(message, symmetricKey);
+            // Send the encrypted message up to the parent component
             onReceiveMessage(encryptedMessage);
             setMessage('');
             setMessageStatus('Message sent successfully.');

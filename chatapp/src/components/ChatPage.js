@@ -3,28 +3,28 @@ import Chat from './Chat';
 import './ChatPage.css';
 import axios from 'axios';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { generateKeyPair, encryptWithPublicKey, decryptWithPrivateKey, generateSymmetricKey, decryptWithSymmetricKey } from '../utils/cryptoUtils';
+import { generateKeyPair, encryptWithPublicKey, decryptWithPrivateKey, generateSymmetricKey, encryptWithSymmetricKey, decryptWithSymmetricKey } from '../utils/cryptoUtils';
 import { sendEmail } from '../utils/SendEmail';
 import { googleSignIn, googleSignOut } from '../utils/googleAuth';
 
 const ChatPage = () => {
-    const [email, setEmail] = useState('');
     const [publicKey, setPublicKey] = useState('');
     const [privateKey, setPrivateKey] = useState('');
     const [recipientPublicKey, setRecipientPublicKey] = useState('');
     const [messageStatus, setMessageStatus] = useState('');
     const [user, setUser] = useState(null);
     const [recipientEmail, setRecipientEmail] = useState('');
-    const [encryptedMessage, setEncryptedMessage] = useState('');
     const [encryptedSymmetricKey, setEncryptedSymmetricKey] = useState('');
     const [symmetricKey, setSymmetricKey] = useState('');
     const [messages, setMessages] = useState([]);
+    console.log(messages)
 
     useEffect(() => {
         const auth = getAuth();
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 setUser(user);
+                // Generate keys only if needed
                 const { publicKey: userPublicKey, privateKey: userPrivateKey } = generateKeyPair();
                 setPublicKey(userPublicKey);
                 setPrivateKey(userPrivateKey);
@@ -35,10 +35,10 @@ const ChatPage = () => {
     }, []);
 
     useEffect(() => {
-        if (user) {
+        if (user && recipientEmail && symmetricKey) {
             fetchMessages();
         }
-    }, [user]);
+    }, [user, recipientEmail, symmetricKey]);
 
     const fetchMessages = async () => {
         try {
@@ -49,10 +49,22 @@ const ChatPage = () => {
                 }
             });
 
-            const decryptedMessages = response.data.messages.map(msg => ({
-                sender: msg.sender,
-                message: decryptWithSymmetricKey(msg.message, symmetricKey)
-            }));
+            console.log('Fetched messages:', response.data.messages);  // Debug log
+
+            const decryptedMessages = response.data.messages.map(msg => {
+                if (!msg.message) {
+                    console.warn('Skipping message with missing content:', msg);
+                    return { sender: msg.sender, message: 'Message content missing' };
+                }
+
+                try {
+                    const decryptedMessage = decryptWithSymmetricKey(msg.message, symmetricKey);
+                    return { sender: msg.sender, message: decryptedMessage };
+                } catch (error) {
+                    console.error('Error decrypting message:', error);
+                    return { sender: msg.sender, message: 'Error decrypting message' };
+                }
+            });
 
             setMessages(decryptedMessages);
         } catch (error) {
@@ -110,6 +122,7 @@ const ChatPage = () => {
 
         try {
             await sendEmail(recipientEmail, subject, body);
+            setEncryptedSymmetricKey(encryptedSecretKey);
             setMessageStatus('Encrypted symmetric key sent via email.');
         } catch (error) {
             setMessageStatus('Failed to send encrypted symmetric key.');
@@ -125,27 +138,29 @@ const ChatPage = () => {
             const decryptedKey = decryptWithPrivateKey(encryptedSymmetricKey, privateKey);
             setSymmetricKey(decryptedKey);
             setMessageStatus('Symmetric key decrypted successfully.');
+            fetchMessages(); // Fetch messages after key is decrypted
         } catch (error) {
             console.error('Error decrypting symmetric key:', error);
             setMessageStatus('Error decrypting symmetric key.');
         }
     };
 
-    const handleReceiveMessage = (encryptedMessage) => {
-        if (!symmetricKey) {
-            setMessageStatus('No symmetric key available for decryption.');
+    const handleSendMessage = async (encryptedMessage) => {
+        if (!user || !symmetricKey) {
+            setMessageStatus('No symmetric key available for encryption.');
             return;
         }
         try {
-            const decryptedMessage = decryptWithSymmetricKey(encryptedMessage, symmetricKey);
-            setMessages(prevMessages => [...prevMessages, { sender: 'Unknown', message: decryptedMessage }]);
-            setEncryptedMessage(decryptedMessage);
+            await axios.post('http://127.0.0.1:5000/send-message', {
+                recipient: recipientEmail,
+                sender: user.email,
+                encrypted_message: encryptedMessage
+            });
+            fetchMessages(); // Refresh messages after sending
         } catch (error) {
-            console.error('Error decrypting message:', error);
-            setMessageStatus('Error decrypting message.');
+            console.error('Error sending message:', error);
         }
     };
-
 
     const handlePublicKeyChange = (e) => {
         setRecipientPublicKey(e.target.value);
@@ -198,12 +213,9 @@ const ChatPage = () => {
                     <div>
                         <Chat
                             recipientEmail={recipientEmail}
-                            onReceiveMessage={handleReceiveMessage}
+                            onReceiveMessage={handleSendMessage}
                             symmetricKey={symmetricKey}
-                            user={user.email}
-                            fetchMessages={fetchMessages}
                         />
-                        {encryptedMessage && <p>Decrypted Message: {encryptedMessage}</p>}
                         <div>
                             <h2>Chat History</h2>
                             {messages.map((msg, index) => (
