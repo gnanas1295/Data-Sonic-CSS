@@ -3,7 +3,7 @@ import Chat from './Chat';
 import './ChatPage.css';
 import axios from 'axios';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { generateKeyPair, encryptWithPublicKey, decryptWithPrivateKey, generateSymmetricKey, encryptWithSymmetricKey, decryptWithSymmetricKey } from '../utils/cryptoUtils';
+import { generateKeyPair, encryptWithPublicKey, decryptWithPrivateKey, generateSymmetricKey, decryptWithSymmetricKey } from '../utils/cryptoUtils';
 import { sendEmail } from '../utils/SendEmail';
 import { googleSignIn, googleSignOut } from '../utils/googleAuth';
 
@@ -17,6 +17,7 @@ const ChatPage = () => {
     const [encryptedSymmetricKey, setEncryptedSymmetricKey] = useState('');
     const [symmetricKey, setSymmetricKey] = useState('');
     const [messages, setMessages] = useState([]);
+    const [fetchingMessages, setFetchingMessages] = useState(false); // Flag to control message fetching
     console.log(messages)
 
     useEffect(() => {
@@ -36,11 +37,23 @@ const ChatPage = () => {
 
     useEffect(() => {
         if (user && recipientEmail && symmetricKey) {
+            // Fetch messages immediately when conditions are met
             fetchMessages();
+
+            // Set up periodic fetching
+            const intervalId = setInterval(() => {
+                fetchMessages();
+            }, 5000); // Fetch every 5 seconds
+
+            // Cleanup interval on component unmount or dependencies change
+            return () => clearInterval(intervalId);
         }
     }, [user, recipientEmail, symmetricKey]);
 
     const fetchMessages = async () => {
+        if (fetchingMessages) return; // Prevent overlapping fetches
+        setFetchingMessages(true);
+
         try {
             const response = await axios.get('http://127.0.0.1:5000/get-messages', {
                 params: {
@@ -69,9 +82,10 @@ const ChatPage = () => {
             setMessages(decryptedMessages);
         } catch (error) {
             console.error('Error fetching messages:', error);
+        } finally {
+            setFetchingMessages(false); // Reset the flag
         }
     };
-
 
     const handleLogin = async () => {
         try {
@@ -156,7 +170,8 @@ const ChatPage = () => {
                 sender: user.email,
                 encrypted_message: encryptedMessage
             });
-            fetchMessages(); // Refresh messages after sending
+            // Fetch messages after sending
+            fetchMessages();
         } catch (error) {
             console.error('Error sending message:', error);
         }
