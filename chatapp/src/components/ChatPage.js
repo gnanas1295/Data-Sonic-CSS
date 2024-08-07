@@ -7,6 +7,12 @@ import { generateKeyPair, encryptWithPublicKey, decryptWithPrivateKey, generateS
 import { sendEmail } from '../utils/SendEmail';
 import { googleSignIn, googleSignOut } from '../utils/googleAuth';
 
+// Utility function for email validation
+const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
+
 const ChatPage = () => {
     const [publicKey, setPublicKey] = useState('');
     const [privateKey, setPrivateKey] = useState('');
@@ -18,7 +24,6 @@ const ChatPage = () => {
     const [symmetricKey, setSymmetricKey] = useState('');
     const [messages, setMessages] = useState([]);
     const [fetchingMessages, setFetchingMessages] = useState(false); // Flag to control message fetching
-    console.log(messages)
 
     useEffect(() => {
         const auth = getAuth();
@@ -111,6 +116,12 @@ const ChatPage = () => {
             return;
         }
 
+        // Validate recipient email
+        if (!validateEmail(recipientEmail)) {
+            setMessageStatus('Invalid recipient email address.');
+            return;
+        }
+
         const subject = 'Your Public Key';
         const body = `Here is my public key:\n\n${publicKey}\n\nPlease use this public key to encrypt messages or symmetric keys for me.`;
 
@@ -125,6 +136,12 @@ const ChatPage = () => {
     const handleSendEncryptedSymmetricKey = async () => {
         if (!user || !recipientPublicKey) {
             setMessageStatus('Please log in and provide recipient public key.');
+            return;
+        }
+
+        // Validate recipient public key
+        if (!recipientPublicKey.trim()) {
+            setMessageStatus('Recipient public key cannot be empty.');
             return;
         }
 
