@@ -21,27 +21,28 @@ secure_messaging/
 
 ## Getting Started
 
-1. Navigate to the `secure-messaging-gmail` directory:
+1. Navigate to the `backend` directory:
 
    ```sh
-   cd secure_messaging
+   cd backend
    ```
 
 2. Open terminal: (For Mac)
-
+    For running Backend server
    ```sh
    python -m venv venv
    source venv/bin/activate
-   pip install Flask Flask-SQLAlchemy Flask-Mail cryptography
+   pip install Flask Flask-SQLAlchemy Flask-Mail cryptography requests nvm
+   pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client flask-cors gunicorn
    python app.py
    ```
 3. Open Command Prompt: (For Windows)
-
+   For running Backend server
    ```sh
    python -m venv venv
    venv\Scripts\activate
    pip install Flask Flask-SQLAlchemy Flask-Mail cryptography requests nvm
-   pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+   pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client flask-cors gunicorn
    python app.py
    ```
    
@@ -59,6 +60,22 @@ secure_messaging/
     set GOOGLE_CLIENT_ID=your_google_client_id_here
     set GOOGLE_CLIENT_SECRET=your_google_client_secret_here
     ```
+5. Open terminal: (For Mac)
+    For running Frontend
+   ```
+   cd chatapp
+   nvm use 18
+   npm install
+   npm start
+   ```
+6. Open Command Prompt: (For Windows)
+   For running Frontend
+   ```
+   cd chatapp
+   nvm use 18
+   npm install
+   npm start
+   ```
 
    
 ## Features
