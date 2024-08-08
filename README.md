@@ -110,3 +110,32 @@ If you already have a virtual environment, remove it and create a new one to ens
    ```
 
 This setup provides a secure, end-to-end encrypted chatbot for a resort website with user-friendly authentication and a web-based interface.
+
+Important info about each files:
+FE Files:
+
+1) App.js -> Main Entry Sets up routing for different components (e.g., ChatPage, Login, Homepage) using React Router
+
+2) ChatPage.js -> Manages the chat interface where users send and receive messages (Displays chat interface.
+Handles sending and receiving messages.
+Encrypts messages before sending using the symmetric key.
+Decrypts received messages using the symmetric key.)
+(Communicates with backend to send and receive encrypted messages), THis internally uses chat.js to provide the interface for the user interaction.
+
+3) Chat.js -> that focuses on the user interface for sending and receiving messages (Rendering Chat Interface: It provides the user interface for typing and sending messages.
+Encrypting Messages: It encrypts messages using the provided symmetric key before sending them.
+Displaying Status: It displays the status of message sending (e.g., success or error).
+
+4) Homepage.js -> Displays the homepage of the application (Typically would provide navigation to login or chat pages.)
+
+5) Login.js -> Manages user login via Google authentication. (Redirects authenticated users to ChatPage.)
+
+6) cryptoUtils.js -> Provides cryptographic utilities for the frontend, Generates symmetric keys (AES).and Generates RSA key pairs
+
+Backend:
+
+1) app.py -> Backend server handling key exchange and message storage
+
+DB:
+
+2) messages.db -> SQLite database storing user messages and keys
