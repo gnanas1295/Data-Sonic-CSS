@@ -177,10 +177,10 @@ const ChatPage = () => {
     };
 
     const handleSendMessage = async (encryptedMessage) => {
-        if (!user || !symmetricKey) {
-            setMessageStatus('No symmetric key available for encryption.');
-            return;
-        }
+        // if (!user || !symmetricKey) {
+        //     setMessageStatus('No symmetric key available for encryption.');
+        //     return;
+        // }
         try {
             await axios.post('http://127.0.0.1:5000/send-message', {
                 recipient: recipientEmail,
@@ -233,14 +233,14 @@ const ChatPage = () => {
                         {messageStatus && <p>{messageStatus}</p>}
                     </div>
                     <div>
-                        <h2>Enter Encrypted Symmetric Key</h2>
+                        <h2>Encrypted Symmetric Key</h2>
                         <input
                             type="text"
                             value={encryptedSymmetricKey}
                             onChange={(e) => setEncryptedSymmetricKey(e.target.value)}
                             placeholder="Enter Encrypted Symmetric Key"
                         />
-                        <button onClick={handleDecryptSymmetricKey}>Decrypt Symmetric Key</button>
+                        {/* <button onClick={handleDecryptSymmetricKey}>Decrypt Symmetric Key</button> */}
                     </div>
                     <div>
                         <Chat
