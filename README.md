@@ -102,10 +102,11 @@ secure_messaging/
 If you already have a virtual environment, remove it and create a new one to ensure a clean installation of dependencies.
 
  ```sh
-    cd secure_messaging
-    rm -rf venv
     python -m venv venv
-    source venv/bin/activate  # On Windows use venv\Scripts\activate
+   venv\Scripts\activate
+   pip install Flask Flask-SQLAlchemy Flask-Mail cryptography requests nvm
+   pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client flask-cors gunicorn
+   python app.py
    ```
 
 This setup provides a secure, end-to-end encrypted chatbot for a resort website with user-friendly authentication and a web-based interface.
