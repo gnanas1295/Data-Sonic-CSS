@@ -7,10 +7,10 @@ const Chat = ({ recipientEmail, onReceiveMessage, symmetricKey }) => {
     const [messageStatus, setMessageStatus] = useState('');
 
     const handleSendMessage = async () => {
-        if (!symmetricKey) {
-            setMessageStatus('No symmetric key available for encryption.');
-            return;
-        }
+        // if (!symmetricKey) {
+        //     setMessageStatus('No symmetric key available for encryption.');
+        //     return;
+        // }
         try {
             const encryptedMessage = encryptWithSymmetricKey(message, symmetricKey);
             // Send the encrypted message up to the parent component
